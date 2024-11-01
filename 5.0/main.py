@@ -77,11 +77,19 @@ def check_bells():
 
     schedule = load_schedule('schedule.txt')
     weekdays = load_weekdays('week.txt')
-    last_mod_time = os.path.getmtime('schedule.txt')
+    last_mod_time_schedule = os.path.getmtime('schedule.txt')
+    last_mod_time_week = os.path.getmtime('week.txt')
     rung_bells = set()
 
     while True:
         current_day = datetime.now().strftime('%A')
+        
+        # Проверка на обновление файла week.txt
+        file_changed_week, last_mod_time_week = check_file_update('week.txt', last_mod_time_week)
+        if file_changed_week:
+            weekdays = load_weekdays('week.txt')
+            log_event("Файл 'week.txt' был изменён и данные по дням недели обновлены.")
+
         # Проверка включения звонков на текущий день недели
         if not weekdays.get(current_day, False):
             log_event(f"Звонки отключены сегодня ({current_day}).")
@@ -92,10 +100,11 @@ def check_bells():
         current_time = datetime.now().strftime('%H:%M')
 
         # Проверка на изменение файла расписания
-        file_changed, last_mod_time = check_file_update('schedule.txt', last_mod_time)
-        if file_changed:
+        file_changed_schedule, last_mod_time_schedule = check_file_update('schedule.txt', last_mod_time_schedule)
+        if file_changed_schedule:
             schedule = load_schedule('schedule.txt')
             rung_bells.clear()  # Сбрасываем флаг для звонков при обновлении файла
+            log_event("Файл 'schedule.txt' был изменён и расписание звонков обновлено.")
 
         for line in schedule:
             if current_time in line and current_time not in rung_bells:
